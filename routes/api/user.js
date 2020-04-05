@@ -6,10 +6,17 @@ const JWT = require("jsonwebtoken");
 const passport = require("passport");
 const secret = require("../../config/keys");
 const router = express.Router();
+const validateRegister = require("../../validation/register");
+const validateLogin = require("../../validation/login");
 
 router.get("/test", (req, res) => res.json({ msg: "Users works" }));
 
 router.post("/register", (req, res) => {
+  const { errors, isValid } = validateRegister(req.body);
+  if (!isValid) {
+    return res.status(400).json(errors);
+  }
+
   User.findOne({ email: req.body.email }).then(user => {
     if (user) {
       return res.status(400).json({ email: "Email already exists" });
@@ -42,6 +49,12 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
+  const { errors, isValid } = validateLogin(req.body);
+  if (!isValid) {
+    errors.email = "User not found";
+    return res.status(400).json(errors);
+  }
+
   User.findOne({ email: req.body.email }).then(user => {
     if (!user) {
       return res.status(404).json({ email: "User doesn't exist" });
